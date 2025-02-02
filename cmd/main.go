@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,8 +12,11 @@ import (
 )
 
 func main() {
-	config.LoadEnv()
-	token := config.GetEnvVar("TOKEN")
+	config.LoadEnv(".env")
+	token, err := config.GetEnvVar("TOKEN")
+	if err != nil {
+		log.Fatalf("Could not get Token: %v", err)
+	}
 
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + token)
