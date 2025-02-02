@@ -56,7 +56,7 @@ docker run -d --env-file .env discord-lyrics-tabs-bot
 Feel free to submit issues or pull requests if you have any improvements or bug fixes.
 
 ## 📜 License
-This project is licensed under the MIT License.
+This project is licensed under the GPL2 License.
 
 ---
 
