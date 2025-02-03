@@ -8,8 +8,10 @@ import (
 )
 
 const (
+	// LyricsURL stores the base url to the lyrics api
 	LyricsURL = "https://api.lyrics.ovh/v1/"
-	tabURL    = "" //TODO
+	// TabURL stores the base url to the tabs api
+	TabURL = "" //TODO
 )
 
 // Struct to hold API response
