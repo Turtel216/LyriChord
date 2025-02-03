@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+
+	"github.com/Turtel216/LyriChord/internal/format"
 )
 
 const (
@@ -44,4 +47,14 @@ func fetchLyrics(baseURL, song, artist string) (*LyricsResponse, error) {
 	}
 
 	return &result, nil
+}
+
+func RequestLyrics(title, artist string) string {
+	apiResponse, err := fetchLyrics(LyricsURL, title, artist)
+	if err != nil {
+		log.Printf("Error fetching from lyrics api: %v", err)
+		return format.FormatError("Internal error, could not fetch from lyrics API")
+	}
+
+	return format.FormatSong(title, artist, apiResponse.Lyrics)
 }
