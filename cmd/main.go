@@ -12,8 +12,7 @@ import (
 )
 
 func main() {
-	config.LoadEnv(".env")
-	token, err := config.GetEnvVar("TOKEN")
+	token, err := config.GetEnvVar(".env", "TOKEN")
 	if err != nil {
 		log.Fatalf("Could not get Token: %v", err)
 	}
