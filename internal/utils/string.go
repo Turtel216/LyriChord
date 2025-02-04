@@ -42,7 +42,7 @@ func SplitStringIntoChunks(s string, maxLen int) []string {
 // - Missing or improperly formatted command prefix.
 // - Absence of the "by" separator between song and artist.
 // - Missing song title or artist name.
-func parseLyricsCommand(input string) (ping, song, artist string, err error) {
+func ParseLyricsCommand(input string) (ping, song, artist string, err error) {
 	parts := strings.SplitN(input, " ", 2)
 	if len(parts) < 2 || !strings.HasPrefix(parts[0], "!lyrics") {
 		return "", "", "", errors.New("invalid format, expected '!lyrics song by artist'")

@@ -27,8 +27,6 @@ func main() {
 	// Register the messageCreate func as a callback for MessageCreate events.
 	dg.AddHandler(messageCreate)
 
-	// Just like the ping pong example, we only care about receiving message
-	// events in this example.
 	dg.Identify.Intents = discordgo.IntentsGuildMessages
 
 	// Open a websocket connection to Discord and begin listening.
@@ -37,6 +35,8 @@ func main() {
 		fmt.Println("error opening connection,", err)
 		return
 	}
+	// Cleanly close down the Discord session.
+	defer dg.Close()
 
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
@@ -44,6 +44,4 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	// Cleanly close down the Discord session.
-	dg.Close()
 }

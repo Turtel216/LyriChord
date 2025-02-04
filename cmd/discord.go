@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/Turtel216/LyriChord/internal/request"
+	"github.com/Turtel216/LyriChord/internal/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -13,16 +15,11 @@ import (
 // server as we did not request IntentsDirectMessages.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
-	// This isn't required in this specific example but it's a good practice.
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	// In this example, we only care about messages that are "ping".
-	if m.Content != "ping" {
-		return
-	}
 
-	// We create the private channel with the user who sent the message.
+	// Create the private channel with the user who sent the message.
 	channel, err := s.UserChannelCreate(m.Author.ID)
 	if err != nil {
 		// If an error occurred, we failed to create the channel.
@@ -39,8 +36,21 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		)
 		return
 	}
-	// Then we send the message through the channel we created.
-	_, err = s.ChannelMessageSend(channel.ID, "Pong!")
+
+	ping, song, artist, err := utils.ParseLyricsCommand(m.Content)
+	if ping != "!lyrics" { // TODO: check before parsing command
+		return
+	}
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "# Incorrect command format. The correct format is !lyrics <song> by <artist>")
+		return
+	}
+
+	// Get the formated lyric
+	res := request.RequestLyrics(song, artist)
+
+	// Send the lyrics
+	_, err = s.ChannelMessageSend(channel.ID, res)
 	if err != nil {
 		// If an error occurred, we failed to send the message.
 		//

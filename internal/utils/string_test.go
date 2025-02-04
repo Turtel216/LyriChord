@@ -45,7 +45,7 @@ func TestParseLyricsCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			ping, song, artist, err := parseLyricsCommand(tt.input)
+			ping, song, artist, err := ParseLyricsCommand(tt.input)
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {
