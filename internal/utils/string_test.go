@@ -26,3 +26,34 @@ func TestSplitStringIntoChunks(t *testing.T) {
 		assert.Equal(test.expected, result, "Test failed for input: %s", test.input)
 	}
 }
+
+func TestParseLyricsCommand(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedPing   string
+		expectedSong   string
+		expectedArtist string
+		expectError    bool
+	}{
+		{"!lyrics Bohemian Rhapsody by Queen", "!lyrics", "Bohemian Rhapsody", "Queen", false},
+		{"!lyrics Shape of You by Ed Sheeran", "!lyrics", "Shape of You", "Ed Sheeran", false},
+		{"!lyrics Hotel California", "", "", "", true},
+		{"Bohemian Rhapsody by Queen", "", "", "", true},
+		{"!lyrics by Queen", "", "", "", true},
+		{"!lyrics Imagine by John Lennon", "!lyrics", "Imagine", "John Lennon", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			ping, song, artist, err := parseLyricsCommand(tt.input)
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedPing, ping)
+				assert.Equal(t, tt.expectedSong, song)
+				assert.Equal(t, tt.expectedArtist, artist)
+			}
+		})
+	}
+}
