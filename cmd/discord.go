@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Turtel216/LyriChord/internal/request"
 	"github.com/Turtel216/LyriChord/internal/utils"
@@ -37,10 +38,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	ping, song, artist, err := utils.ParseLyricsCommand(m.Content)
-	if ping != "!lyrics" { // TODO: check before parsing command
+	if !strings.Contains(m.Content, "!lyrics") {
 		return
 	}
+
+	_, song, artist, err := utils.ParseLyricsCommand(m.Content)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "# Incorrect command format. The correct format is !lyrics <song> by <artist>")
 		return
