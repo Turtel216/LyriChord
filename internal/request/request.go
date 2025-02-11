@@ -6,13 +6,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/Turtel216/LyriChord/internal/format"
 )
 
 const (
 	// LyricsURL stores the base url to the lyrics api
-	LyricsURL = "https://api.lyrics.ovh/v1/"
+	LyricsURL = "https://api.lyrics.ovh/v1"
 	// TabURL stores the base url to the tabs api
 	TabURL = "" //TODO
 )
@@ -25,7 +26,7 @@ type LyricsResponse struct {
 
 func fetchLyrics(baseURL, song, artist string) (*LyricsResponse, error) {
 	// Format the URL
-	apiURL := fmt.Sprintf("%s/%s/%s", baseURL, song, artist)
+	apiURL := fmt.Sprintf("%s/%s/%s", baseURL, url.QueryEscape(artist), url.QueryEscape(song))
 
 	// Make HTTP GET request
 	resp, err := http.Get(apiURL)
@@ -38,6 +39,11 @@ func fetchLyrics(baseURL, song, artist string) (*LyricsResponse, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	// Check for non-200 status codes
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	// Parse JSON response
