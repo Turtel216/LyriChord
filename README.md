@@ -1,8 +1,5 @@
 # 🎵 LyriChord Discord Bot
 
-> [!CAUTION]
-> The Bot is still in early development. Many features are not tested or yet to be implemented.
-
 A Discord bot written in Golang that fetches song lyrics and guitar tabs on request. The bot utilizes the [Lyrics.ovh API](https://lyricsovh.docs.apiary.io/#) for lyrics and the [Songsterr API](https://www.songsterr.com/a/wa/api)(See [issue #2](https://github.com/Turtel216/LyriChord/issues/2)) for guitar tabs.
 
 ## 🚀 Features
