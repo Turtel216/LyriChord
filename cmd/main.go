@@ -20,8 +20,7 @@ func main() {
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
-		return
+		log.Fatalf("error creating Discord session: %s", err)
 	}
 
 	// Register the messageCreate func as a callback for MessageCreate events.
@@ -32,10 +31,9 @@ func main() {
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
-		fmt.Println("error opening connection,", err)
-		return
+		log.Fatalf("error opening connection: %s", err)
 	}
-	// Cleanly close down the Discord session.
+
 	defer dg.Close()
 
 	// Wait here until CTRL-C or other term signal is received.
@@ -43,5 +41,4 @@ func main() {
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
-
 }
