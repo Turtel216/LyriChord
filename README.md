@@ -45,9 +45,10 @@ go run cmd/main.go
 ## 🔧 Deployment
 You can deploy the bot using Docker:
 ```sh
-docker build -t discord-lyrics-tabs-bot .
-docker run -d --env-file .env discord-lyrics-tabs-bot
+docker-compose up --build
 ```
+
+Make sure you have the ``.env`` file with the ``TOKEN`` in the project root directory
 
 ## 🤝 Contributing
 Feel free to submit issues or pull requests if you have any improvements or bug fixes.
