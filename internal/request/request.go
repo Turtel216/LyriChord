@@ -2,11 +2,13 @@ package request
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/Turtel216/LyriChord/internal/format"
 )
@@ -43,6 +45,12 @@ func fetchLyrics(baseURL, song, artist string) (*LyricsResponse, error) {
 
 	// Check for non-200 status codes
 	if resp.StatusCode != http.StatusOK {
+		strBody := string(body)
+
+		if strings.Contains(strBody, "No lyrics found") {
+			return nil, SongNotFound
+		}
+
 		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
@@ -58,6 +66,12 @@ func fetchLyrics(baseURL, song, artist string) (*LyricsResponse, error) {
 func RequestLyrics(title, artist string) string {
 	apiResponse, err := fetchLyrics(LyricsURL, title, artist)
 	if err != nil {
+		if errors.Is(err, SongNotFound) {
+			log.Printf("Song not found by API")
+			msg := fmt.Sprintf("Song `%s` by `%s` **not found**", title, artist)
+			return format.FormatError(msg)
+		}
+
 		log.Printf("Error fetching from lyrics api: %v", err)
 		return format.FormatError("Internal error, could not fetch from lyrics API")
 	}
