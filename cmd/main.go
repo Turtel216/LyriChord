@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/Turtel216/LyriChord/internal/caching"
 	"github.com/Turtel216/LyriChord/internal/config"
 	"github.com/bwmarrin/discordgo"
 )
@@ -22,6 +24,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("error creating Discord session: %s", err)
 	}
+
+	// Sartup cache cleanup goroutine
+	caching.StartCacheCleanup(1 * time.Minute)
 
 	// Register the messageCreate func as a callback for MessageCreate events.
 	dg.AddHandler(messageCreate)

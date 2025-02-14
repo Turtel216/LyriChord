@@ -4,13 +4,18 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/Turtel216/LyriChord/internal/caching"
 	"github.com/Turtel216/LyriChord/internal/request"
 	"github.com/Turtel216/LyriChord/internal/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
 var logger = log.New(os.Stdout, "[BOT] ", log.Ldate|log.Ltime)
+
+// lyricsCacheDuration holds the lifetime of lyrics in the in memory cache
+const lyricsCacheDuration = 10 * time.Minute
 
 // This function will be called (due to AddHandler above) every time a new
 // message is created on any channel that the authenticated bot has access to.
@@ -26,32 +31,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	// Check if the message contains a recognized command
 	if !strings.Contains(m.Content, "!lyrics") {
 		logger.Println("Not a !lyrics command. Message Skipped")
 		return
 	}
 
 	logger.Println("Identified !lyrics Ping. Message")
-	// Create the private channel with the user who sent the message.
-	channel, err := s.UserChannelCreate(m.Author.ID)
-	if err != nil {
-		// If an error occurred, we failed to create the channel.
-		//
-		// Some common causes are:
-		// 1. We don't share a server with the user (not possible here).
-		// 2. We opened enough DM channels quickly enough for Discord to
-		//    label us as abusing the endpoint, blocking us from opening
-		//    new ones.
-		logger.Println("error creating channel:", err)
-		s.ChannelMessageSend(
-			m.ChannelID,
-			"Something went wrong while sending the DM!",
-		)
-		return
-	}
 
-	logger.Println("User channel created")
-
+	// Parse lyrics request queries
 	_, song, artist, err := utils.ParseLyricsCommand(m.Content)
 	if err != nil {
 		logger.Printf("Error parsing message: %s", err)
@@ -61,26 +49,47 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	logger.Println("Parsed Command")
 
-	// Get the formated lyric
-	res := request.RequestLyrics(song, artist)
+	// Cache key (normalized)
+	cacheKey := caching.GetCacheKey(song, artist)
 
-	logger.Println("Got API response")
-
-	// Send the lyrics
-	_, err = s.ChannelMessageSend(channel.ID, res)
-	if err != nil {
-		// If an error occurred, we failed to send the message.
-		//
-		// It may occur either when we do not share a server with the
-		// user (highly unlikely as we just received a message) or
-		// the user disabled DM in their settings (more likely).
-		logger.Println("error sending DM message:", err)
-		s.ChannelMessageSend(
-			m.ChannelID,
-			"Failed to send you a DM. "+
-				"Did you disable DM in your privacy settings?",
-		)
+	// Check cache first
+	if cached, found := caching.LyricsCache.Load(cacheKey); found {
+		logger.Println("Cache hit: Sending cached lyrics")
+		sendLyrics(s, m.Author.ID, m.ChannelID, cached.(caching.CacheItem).Lyrics)
+		return
 	}
 
-	logger.Println("Replyed to message")
+	// Use singleflight to prevent duplicate API calls
+	res, err, _ := caching.RequestGroup.Do(cacheKey, func() (interface{}, error) {
+		logger.Println("Cache miss: Fetching lyrics from API")
+		lyrics := request.RequestLyrics(song, artist)
+		caching.LyricsCache.Store(cacheKey, caching.CacheItem{Lyrics: lyrics, Expiration: time.Now().Add(lyricsCacheDuration)})
+		return lyrics, nil
+	})
+
+	if err != nil {
+		logger.Println("Error fetching lyrics:", err)
+		s.ChannelMessageSend(m.ChannelID, "Failed to retrieve lyrics.")
+		return
+	}
+
+	// Send lyrics
+	sendLyrics(s, m.Author.ID, m.ChannelID, res.(string))
+}
+
+// sendLyrics is used to send lyrics to the user
+func sendLyrics(s *discordgo.Session, userID, channelID, lyrics string) {
+	channel, err := s.UserChannelCreate(userID)
+	if err != nil {
+		logger.Println("Error creating DM channel:", err)
+		s.ChannelMessageSend(channelID, "Something went wrong while sending the DM!")
+		return
+	}
+
+	_, err = s.ChannelMessageSend(channel.ID, lyrics)
+	if err != nil {
+		logger.Println("Error sending DM:", err)
+		s.ChannelMessageSend(channelID, "Failed to send you a DM. Did you disable DMs in privacy settings?")
+	}
+	logger.Println("Message send")
 }
